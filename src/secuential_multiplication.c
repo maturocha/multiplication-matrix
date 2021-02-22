@@ -51,13 +51,14 @@ int main(int argc,  char *argv[]) {
     /*
       FASE 1
     */
+    //Step 1
     multiplication();
     print_matrix(C,SIZE);
 
     /*
       FASE 2
     */
-
+   //Step 2
    //W[i] = Prom row i of C
     for(int i=0;i<SIZE;i++){
         ac_prom_w = 0;
@@ -68,14 +69,14 @@ int main(int argc,  char *argv[]) {
     }
 
     print_vector(W,SIZE);
-
+    //Step 3
     multiplication();
     print_matrix(C,SIZE);
 
     /*
       FASE 3
     */
-
+    //Step 4
      //W[i] = Prom column i of C
     for(int j=0;j<SIZE;j++){
         ac_prom_w = 0;
@@ -86,6 +87,7 @@ int main(int argc,  char *argv[]) {
     }
 
     print_vector(W,SIZE);
+    //Step 5
     multiplication();
 
     //FINAL
@@ -154,6 +156,9 @@ void multiplication()
   float ac = 0;
   float term1 = 0;
   float term2 = 0;
+
+  //C(i,j) = ∑ √(A(i,k) − W(k))**2 * (B(k,j) − W(k))**2 
+  
   for(int i=0;i<SIZE;i++){
       for(int j=0;j<SIZE;j++){
         for(int k=0;k<SIZE;k++){
