@@ -15,13 +15,13 @@ Autor: Matur
 #include <time.h>
 
 //Const 
-#define SIZE 512 
+#define SIZE 1024 
 #define NRO_TESTS 10
 #define DEBUG TRUE
-#define MAESTRO 0 //Master ID
+#define MASTER 0 //Master ID
 #define FROM_MASTER 0 //From Master to slave
 #define FROM_SLAVE 1 //From Slave to Master
-#define STEPS = 5
+#define STEPS 5
 
 //Functions
 void init_vector();
@@ -37,8 +37,8 @@ double	A[SIZE][SIZE],  // Matrix A
 	      C[SIZE][SIZE],  // Matrix C
         W[SIZE];     // Vector W
 
-int idProceso; // ID Proceso
-int cant_procesos; // Cantidad de Procesos
+int process_id; // ID Proceso
+int process_nro; // Cantidad de Procesos
 
 
 int main (int argc, char *argv[]) 
@@ -46,16 +46,16 @@ int main (int argc, char *argv[])
     int error, slaves;
 
     MPI_Init(&argc, &argv); //Init MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &idProceso); //Get process_id
-    MPI_Comm_size(MPI_COMM_WORLD, &cant_procesos); //Get #process
-    if (cant_procesos < 2 ) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &process_id); //Get process_id
+    MPI_Comm_size(MPI_COMM_WORLD, &process_nro); //Get #process
+    if (process_nro < 2 ) {
        printf("Error. Se necesita al menos dos procesos...\n");
        MPI_Abort(MPI_COMM_WORLD, error);
        exit(1);
     }
-    slaves = cant_procesos-1;
+    slaves = process_nro-1;
 
-    if (idProceso == 0) 
+    if (process_id == 0) 
       //master id = 0
           master_task(slaves); //Init master task
     else
@@ -125,8 +125,7 @@ void master_task(int slaves) {
 
   //Vars
   double time_init, time_final; 
-  int step; 
-  int id_slave, rows, offset, rest, i, j;
+  int step, id_slave, rows, offset, rest, i, j;
 
   //Vars MPI
   MPI_Status status; // MPI_Recv Status
@@ -142,7 +141,7 @@ void master_task(int slaves) {
     rest = rest + rows;
 
   for (int test=1;test<=NRO_TESTS;test++) {
-    printf("\nInicio de la test= %i\n", test);
+    printf("\nInicio test= %i\n", test);
     //Init structures
     init_vector();
     print_vector(W,SIZE);
@@ -239,16 +238,16 @@ void slave_task(){
   double ac;
 
   for (step= 1; step <= STEPS; step++) { 
-      MPI_Recv(&step, 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv step nro
+      MPI_Recv(&step, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv step nro
       switch (step) {
         case 1: 
         case 3: 
         case 5: 
-          MPI_Recv(&rows, 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); 
-          MPI_Recv(&offset  , 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); 
-          MPI_Recv(&A,rows*SIZE, MPI_DOUBLE, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); 
-          MPI_Recv(&B,SIZE*SIZE, MPI_DOUBLE, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); 
-          MPI_Recv(&W,SIZE, MPI_DOUBLE, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status);
+          MPI_Recv(&rows, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); 
+          MPI_Recv(&offset  , 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); 
+          MPI_Recv(&A,rows*SIZE, MPI_DOUBLE, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); 
+          MPI_Recv(&B,SIZE*SIZE, MPI_DOUBLE, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); 
+          MPI_Recv(&W,SIZE, MPI_DOUBLE, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
 
           //C(i,j) = ∑ √(A(i,k) − W(k))**2 * (B(k,j) − W(k))**2 
           for (i=0; i<rows; i++)  
@@ -259,14 +258,14 @@ void slave_task(){
                   ac += sqrt( pow(A[i][k]-W[k],2) * pow(B[k][j]-W[k],2) );
                 C[i][j]= ac;
               }
-          MPI_Send(&offset, 1, MPI_INT, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD); //Send offset to master
-          MPI_Send(&rows, 1, MPI_INT, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD);  //Send rows number
-          MPI_Send(&C, rows*SIZE, MPI_DOUBLE, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD); //Send part of C
+          MPI_Send(&offset, 1, MPI_INT, MASTER, FROM_SLAVE, MPI_COMM_WORLD); //Send offset to master
+          MPI_Send(&rows, 1, MPI_INT, MASTER, FROM_SLAVE, MPI_COMM_WORLD);  //Send rows number
+          MPI_Send(&C, rows*SIZE, MPI_DOUBLE, MASTER, FROM_SLAVE, MPI_COMM_WORLD); //Send part of C
         break;
         case 2: 
-           MPI_Recv(&rows, 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv rows numbers
-           MPI_Recv(&offset  , 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv offset
-           MPI_Recv(&C,rows*SIZE, MPI_DOUBLE, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv part of C
+           MPI_Recv(&rows, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv rows numbers
+           MPI_Recv(&offset  , 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv offset
+           MPI_Recv(&C,rows*SIZE, MPI_DOUBLE, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv part of C
            //W[i] = Prom row i of C
            for (i=0; i<rows; i++) {   
                ac = 0;
@@ -275,17 +274,17 @@ void slave_task(){
                  }
                W[i] = ac / SIZE;
              }     
-           MPI_Send(&offset, 1, MPI_INT, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD);
-           MPI_Send(&rows, 1, MPI_INT, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD);  
-           MPI_Send(&W, rows, MPI_DOUBLE, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD);
+           MPI_Send(&offset, 1, MPI_INT, MASTER, FROM_SLAVE, MPI_COMM_WORLD);
+           MPI_Send(&rows, 1, MPI_INT, MASTER, FROM_SLAVE, MPI_COMM_WORLD);  
+           MPI_Send(&W, rows, MPI_DOUBLE, MASTER, FROM_SLAVE, MPI_COMM_WORLD);
         break;
         case 4:
-           MPI_Recv(&rows, 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); 
-           MPI_Recv(&offset  , 1, MPI_INT, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status); 
+           MPI_Recv(&rows, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); 
+           MPI_Recv(&offset  , 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); 
            MPI_Type_vector(SIZE, 1, SIZE, MPI_DOUBLE, &dt_aux); 
            MPI_Type_create_resized(dt_aux, 0, sizeof(double), &dt_column);
            MPI_Type_commit(&dt_column);
-           MPI_Recv(&C,rows, dt_column, MAESTRO, FROM_MASTER, MPI_COMM_WORLD, &status);
+           MPI_Recv(&C,rows, dt_column, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
            //W[i] = Prom column i of C
            for (j=0; j<rows; j++) {   
              ac = 0;
@@ -294,9 +293,9 @@ void slave_task(){
                  }
              W[j] = ac / SIZE;
              } 
-           MPI_Send(&offset, 1, MPI_INT, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD); 
-           MPI_Send(&rows, 1, MPI_INT, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD);  
-           MPI_Send(&W, rows, MPI_DOUBLE, MAESTRO, FROM_SLAVE, MPI_COMM_WORLD);
+           MPI_Send(&offset, 1, MPI_INT, MASTER, FROM_SLAVE, MPI_COMM_WORLD); 
+           MPI_Send(&rows, 1, MPI_INT, MASTER, FROM_SLAVE, MPI_COMM_WORLD);  
+           MPI_Send(&W, rows, MPI_DOUBLE, MASTER, FROM_SLAVE, MPI_COMM_WORLD);
         break;
       }              
    }

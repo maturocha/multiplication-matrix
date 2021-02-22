@@ -14,7 +14,7 @@ Autor: Matur
 #include <time.h>
 
 //Const 
-#define SIZE 512 
+#define SIZE 1024 
 #define NRO_TESTS 10
 #define DEBUG TRUE
 
@@ -158,7 +158,7 @@ void multiplication()
   float term2 = 0;
 
   //C(i,j) = ∑ √(A(i,k) − W(k))**2 * (B(k,j) − W(k))**2 
-  
+
   for(int i=0;i<SIZE;i++){
       for(int j=0;j<SIZE;j++){
         for(int k=0;k<SIZE;k++){
