@@ -14,9 +14,9 @@ Autor: Matur
 #include <time.h>
 
 //Const 
-#define SIZE 1024 
-#define NRO_TESTS 10
-#define DEBUG TRUE
+#define SIZE 512
+#define NRO_TESTS 2
+#define PRINT 0
 
 //Functions
 void init_vector();
@@ -36,15 +36,22 @@ int main(int argc,  char *argv[]) {
   int i, j, k, fase;
   float ac_prom_w;
   clock_t time_init, time_final;
+  double time_total;
+  FILE *f;
+ 
+  f = fopen("secuential.csv", "w");
 
-  //for (int test=1; test<=NRO_TESTS;test++) {
-    //printf("\nTest Nro= %i\n", test);
+  for (int test=1; test<=NRO_TESTS;test++) {
+    printf("\nTest Nro= %i\n", test);
     init_vector();
-    print_vector(W,SIZE);
+    if (PRINT == 1)
+      print_vector(W,SIZE);
     init_matrix(A,SIZE);
-    print_matrix(A,SIZE);
+    if (PRINT == 1)
+      print_matrix(A,SIZE);
     init_matrix(B,SIZE);
-    print_matrix(B,SIZE);
+    if (PRINT == 1)
+      print_matrix(B,SIZE);
 
     time_init = clock();
 
@@ -53,7 +60,8 @@ int main(int argc,  char *argv[]) {
     */
     //Step 1
     multiplication();
-    print_matrix(C,SIZE);
+    if (PRINT == 1)
+      print_matrix(C,SIZE);
 
     /*
       FASE 2
@@ -68,10 +76,14 @@ int main(int argc,  char *argv[]) {
         W[i] = ac_prom_w / SIZE;
     }
 
-    print_vector(W,SIZE);
+    if (PRINT == 1)
+      print_vector(W,SIZE);
+
     //Step 3
     multiplication();
-    print_matrix(C,SIZE);
+
+    if (PRINT == 1)
+      print_matrix(C,SIZE);
 
     /*
       FASE 3
@@ -86,17 +98,21 @@ int main(int argc,  char *argv[]) {
         W[j] = ac_prom_w / SIZE;
     }
 
-    print_vector(W,SIZE);
+    if (PRINT == 1)
+      print_vector(W,SIZE);
     //Step 5
     multiplication();
 
     //FINAL
 
     time_final = clock();
-    printf("Time: %f\n", (double)(time_final - time_init) / CLOCKS_PER_SEC);
+    time_total = (time_final - time_init) / CLOCKS_PER_SEC;
+    printf("Time: %f\n", time_total);
+    fprintf(f, "%d,%f\n", test, time_total); 
 
-  
- //}
+ } //for
+
+ fclose(f);
 
 }
 
