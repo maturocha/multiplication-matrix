@@ -2,7 +2,7 @@
 Algoritm: Matrix multiplication
 Type: MPI
 Compile: mpicc openmp_multiplication.c -lm -fopenmp -o openmp
-Execute: mpirun -np [nro_process] openmp [nro_threads]
+Execute: mpirun -np 2 openmp 4
 Autor: Matur
 */
 
@@ -16,13 +16,14 @@ Autor: Matur
 #include <unistd.h>
 #include <time.h>
 
-#define SIZE 1024 
+#define SIZE 512 
 #define NRO_TESTS 10
 #define DEBUG TRUE
 #define MASTER 0 //Master ID
 #define FROM_MASTER 0 //From Master to slave
 #define FROM_SLAVE 1 //From Slave to Master
 #define STEPS 5
+#define PRINT 0
 
 
 // Declare Matrix and Vector
@@ -136,6 +137,10 @@ void master_task(int slaves){
   int step; 
   int id_slave, rows, offset, rest, i, j;
 
+  FILE *f;
+ 
+  f = fopen("mpi.csv", "a");
+
   //Vars MPI
   MPI_Status status; // MPI_Recv Status
   MPI_Datatype dt_aux, dt_column; //Special type of data to rcv columns
@@ -147,7 +152,6 @@ void master_task(int slaves){
     rest = rows;
   else
     rest = rest + rows;
-
 
   for (int test=1; test <= NRO_TESTS; test++) {
     printf("\nInicio test= %i\n", test);
@@ -173,6 +177,7 @@ void master_task(int slaves){
       MPI_Send(&rows, 1, MPI_INT, id_slave, FROM_MASTER,MPI_COMM_WORLD); //Send rows num.
       MPI_Send(&offset, 1, MPI_INT, id_slave, FROM_MASTER,MPI_COMM_WORLD); //Send offset
       //Depends on the step -> the action to do
+      
       switch (step) {
         case 1:
         case 3:
@@ -217,23 +222,41 @@ void master_task(int slaves){
           break; }  
      }
 
-     //print_matrix(C,SIZE);
-     //print_vector(W,SIZE);
-     
-      // Finalize slaves
-      if ((test==NRO_TESTS) && (step = 5)) {
+      if (PRINT == 1)
+        print_matrix(C,SIZE);
 
-        for (id_slave= 1; id_slave<=slaves;id_slave++)
-          MPI_Send(&step, 1, MPI_INT, id_slave, FROM_MASTER,MPI_COMM_WORLD);      
-      }          
+      if (PRINT == 1)
+        print_vector(W,SIZE);
+
+       // Finalize slaves
+      if ((test == NRO_TESTS) && (step == 5)) {
+        //Send int > 5 to finish the while
+        for (id_slave= 1; id_slave <= slaves; id_slave++) {
+          step = 100;
+          MPI_Send(&step, 1, MPI_INT, id_slave, FROM_MASTER, MPI_COMM_WORLD);      
+        }
+          
+      }    
+
+      //Increment step
+      step++;
+
       rows = (SIZE / slaves); 
-      offset = 0;  
+      offset = 0; 
+
     
   } 
+
   time_final = MPI_Wtime(); 
-  //print_matrix(C,SIZE);
-  //print_vector(W,SIZE);
-  printf("\nTime Total: %f\n\n", time_final - time_init);
+
+  if (PRINT == 1)
+    print_matrix(C,SIZE);
+  
+  if (PRINT == 1)
+    print_vector(W,SIZE);
+
+  printf("\nTime: %f\n\n", time_final - time_init);
+  fprintf(f, "%d,%d,%d,%lf\n", test, SIZE, process_nro, time_final - time_init); 
   }
 }
 
@@ -250,6 +273,8 @@ void slave_task(){
 
   for (step= 1; step <= STEPS; step++) { 
       MPI_Recv(&step, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv step nro
+      if (PRINT == 1)
+        printf("\nRecibo Step: %d\n\n", step);
       switch (step) {
         case 1: 
         case 3: 

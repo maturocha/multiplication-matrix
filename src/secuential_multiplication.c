@@ -14,7 +14,7 @@ Autor: Matur
 #include <time.h>
 
 //Const 
-#define SIZE 512
+#define SIZE 400
 #define NRO_TESTS 2
 #define PRINT 0
 
@@ -39,7 +39,7 @@ int main(int argc,  char *argv[]) {
   double time_total;
   FILE *f;
  
-  f = fopen("secuential.csv", "w");
+  f = fopen("secuential.csv", "a");
 
   for (int test=1; test<=NRO_TESTS;test++) {
     printf("\nTest Nro= %i\n", test);
@@ -106,9 +106,9 @@ int main(int argc,  char *argv[]) {
     //FINAL
 
     time_final = clock();
-    time_total = (time_final - time_init) / CLOCKS_PER_SEC;
+    time_total = (double)(time_final - time_init) / CLOCKS_PER_SEC;
     printf("Time: %f\n", time_total);
-    fprintf(f, "%d,%f\n", test, time_total); 
+    fprintf(f, "%d,%d,%lf\n", test, SIZE, time_total); 
 
  } //for
 
