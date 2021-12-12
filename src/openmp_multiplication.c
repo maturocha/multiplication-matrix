@@ -256,7 +256,7 @@ void master_task(int slaves){
     print_vector(W,SIZE);
 
   printf("\nTime: %f\n\n", time_final - time_init);
-  fprintf(f, "%d,%d,%d,%lf\n", test, SIZE, process_nro, time_final - time_init); 
+  fprintf(f, "%d,%d,%d,%d,%lf\n", test, SIZE, process_nro, time_final - time_init); 
   }
 }
 
