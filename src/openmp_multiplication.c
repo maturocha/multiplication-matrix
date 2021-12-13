@@ -1,6 +1,6 @@
 /*
 Algoritm: Matrix multiplication
-Type: MPI
+Type: Open MPI
 Compile: mpicc openmp_multiplication.c -lm -fopenmp -o openmp
 Execute: mpirun -np 2 openmp 4
 Autor: Matur
@@ -42,7 +42,7 @@ void init_vector();
 void print_vector(double vec[],int n);
 void init_matrix(double mat[SIZE][SIZE],int n);
 void print_matrix(double mat[SIZE][SIZE],int n);
-void master_task(int slaves);
+void master_task(int slaves, int threads_nro);
 void slave_task();
 
 int main (int argc, char *argv[]) 
@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
 
   if (process_id == 0) 
       //master id = 0
-          master_task(slaves); //Init master task
+          master_task(slaves, threads_nro); //Init master task
     else
     //slaves id != 0
           slave_task(); //Init slave task
@@ -130,7 +130,7 @@ void print_matrix(double mat[SIZE][SIZE],int n){
 /*--------------------------------------
 	Master TASK
 */
-void master_task(int slaves){
+void master_task(int slaves, int threads_nro){
 
   //Vars
   double time_init, time_final; 
@@ -139,7 +139,7 @@ void master_task(int slaves){
 
   FILE *f;
  
-  f = fopen("mpi.csv", "a");
+  f = fopen("openmpi.csv", "a");
 
   //Vars MPI
   MPI_Status status; // MPI_Recv Status
@@ -157,14 +157,18 @@ void master_task(int slaves){
     printf("\nInicio test= %i\n", test);
     //Init structures
     init_vector();
-    print_vector(W,SIZE);
+    if (PRINT == 1)
+      print_vector(W,SIZE);
     init_matrix(A,SIZE);
-    print_matrix(A,SIZE);
+    if (PRINT == 1)
+      print_matrix(A,SIZE);
     init_matrix(B,SIZE);
-    print_matrix(B,SIZE);
+    if (PRINT == 1)
+      print_matrix(B,SIZE);
+
     step=1; //Inicializar en step 1
     time_init = MPI_Wtime();
-    for (step= 1; step <= STEPS; step++) 
+    while (step <= STEPS)
     {
       printf("\nstep = %i\n", step);
       //Send task to slaves
@@ -256,7 +260,7 @@ void master_task(int slaves){
     print_vector(W,SIZE);
 
   printf("\nTime: %f\n\n", time_final - time_init);
-  fprintf(f, "%d,%d,%d,%d,%lf\n", test, SIZE, process_nro, time_final - time_init); 
+  fprintf(f, "%d,%d,%d,%d,%lf\n", test, SIZE, process_nro, threads_nro, time_final - time_init); 
   }
 }
 
@@ -271,7 +275,7 @@ void slave_task(){
   MPI_Datatype dt_column,dt_aux;  //Tipo de datos especial para recibir columnas en vez de rows.
   double ac;
 
-  for (step= 1; step <= STEPS; step++) { 
+  while (step <= STEPS){
       MPI_Recv(&step, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status); //Rcv step nro
       if (PRINT == 1)
         printf("\nRecibo Step: %d\n\n", step);
