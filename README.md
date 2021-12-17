@@ -23,7 +23,7 @@ Execute: ``
    mpirun -np [nro_process] ./mpi
 ``
 
-# OpenMP
+## OpenMP
 Compile: ``
    mpicc openmp_multiplication.c -lm -fopenmp -o openmp
 ``
