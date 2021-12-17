@@ -52,6 +52,3 @@ Mkfile.old
 dkms.conf
 
 [^\.]*
-
-# ODS FILES
-*.ods
