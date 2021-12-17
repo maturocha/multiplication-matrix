@@ -18,6 +18,7 @@ Execute: ``
 Compile: ``
    mpicc mpi_multiplication.c -std=c99 -lm -o mpi
 ``
+
 Execute: ``
    mpirun -np [nro_process] ./mpi
 ``
